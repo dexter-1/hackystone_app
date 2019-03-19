@@ -20,6 +20,16 @@ function setup() {
 	http.onreadystatechange = function() {
 		if (http.readyState == 4 && http.status == 200) {
 			anchors = JSON.parse(http.responseText);
+
+			for (let i = 0; i < anchors.length; i++) {
+				// put in anchor points onto the canvas
+				fill(255,0,0);
+				circle(anchors[i].x, anchors[i].y, radius);
+
+				fill(255);
+				textAlign(CENTER);
+				text('Anchor ' + anchors[i].anchorId, anchors[i].x, anchors[i].y - 10);
+			}
 		}
 	}
 	http.open('GET', '/get_anchors', true);
