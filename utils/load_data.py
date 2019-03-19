@@ -1,7 +1,10 @@
+"""This tool helps insert data into a redis db.
+"""
 import redis
 import config_parser
 import csv
 import argparse
+import os
 
 parser = argparse.ArgumentParser(description='Tool to init redis DB with data.')
 parser.add_argument('file', type=str,
@@ -38,9 +41,34 @@ def insert_measurement_data(file):
         element = anchorId + ":" + rssi + ":" + str(dataId)
         r.zadd(key, {element:score})
 
-insert_measurement_data('../data/mock_data1/tagdata.csv')
+def insert_anchor_data(file):
+    data = readcsv(file)
+    N = len(data['anchorId'])
+    hset = "anchors"
+    for i in range(0, len(data['anchorId'])):
+        key = data['anchorId'][i] 
+        value = data['X'][i] + ":" + data['Y'][i]
+        r.hset(hset, key, value)
 
+def main(filetype, file):
+    if filetype == 'tags':
+        insert_measurement_data(file)
+        return 0
+    elif filetype == 'anchors':
+        insert_anchor_data(file)
+        return 0
+    return 1
+
+def check_flags(args):
+    if args.type != 'tags' and args.type != 'anchors':
+        parser.print_help()
+        return 1
+    return 0
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    print(args)
+    if check_flags(args):
+        os.exit(1)
+    if main(args.type, args.file):
+        print("Something went wrong?")
+        os.exit(1)
