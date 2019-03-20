@@ -1,3 +1,5 @@
+"""Methods to retrieve current configuration.
+"""
 from ConfigParser import SafeConfigParser
 
 configuration = '../configurations/local.cfg'
