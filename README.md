@@ -41,3 +41,9 @@ $ python3 server.py
 ```
 
 To view the front end, go to http://localhost:5000
+
+## Contributing Code
+
+Run the `run_tests.py` script and ensure no code is broken.
+
+If you are adding a new function or module, consider creating a test and adding it to `run_tests.py`.
