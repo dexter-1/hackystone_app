@@ -20,11 +20,7 @@ def insert_measurement_data(file):
     """
     measurements = Measurement.readcsv(file)
     for measurement in measurements: 
-        key = 'tag' + measurement.tagId
-        score = int(measurement.timestamp)
-        dataId = r.incr('data_counter')
-        element = measurement.anchorId + ":" + measurement.rssi + ":" + str(dataId)
-        r.zadd(key, {element:score}) # TODO(rqureshi): change to measurement.redis_write()
+        measurement.save(r)
 
 def insert_anchor_data(file):
     anchors = Anchor.readcsv(file)

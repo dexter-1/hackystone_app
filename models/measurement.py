@@ -31,9 +31,20 @@ class Measurement:
         zset = "tag" + str(tagId) + "_data"
         data = r.zrangebyscore(zset, begin, end, withscores=True)
         measurements = []
-        <anchorId>:<rssi>:<dataId>
         for d in data:
             parts = d[0].split(':')
             timestamp = d[1]
             measurements.append(Measurement(parts[0], tagId, parts[1], timestamp))
         return measurements
+
+    @staticmethod
+    def zremrangebyrank(r, tagId, begin, end):
+        zset = "tag" + str(tagId) + "_data"
+        return r.zremrangebyrank(zset, begin, end)
+
+    def save(self, r):
+        dataId = r.incr('data_counter')
+        key = 'tag' + self.tagId + "_data"
+        score = int(self.timestamp)
+        element = self.anchorId + ":" + self.rssi + ":" + str(dataId)
+        r.zadd(key, {element:score})
