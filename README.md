@@ -23,6 +23,10 @@ installed using a package manager such as homebrew:
 $ brew install redis
 ```
 
+## Environment Setup
+
+Add the hackystone_app package to the `PYTHONPATH` environment variable.
+
 ## Running the application
 To run the application, you must first start a redis server:
 

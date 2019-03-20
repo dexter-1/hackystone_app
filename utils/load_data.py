@@ -5,6 +5,7 @@ import config_parser
 import argparse
 import os
 from hackystone_app.models.measurement import Measurement
+from hackystone_app.models.anchor import Anchor
 
 parser = argparse.ArgumentParser(description='Tool to init redis DB with data.')
 parser.add_argument('file', type=str,
@@ -18,26 +19,20 @@ def insert_measurement_data(file):
     """Inserts tag measurement data from the given file into redis of the current configuration.
     """
     measurements = Measurement.readcsv(file)
-    data = readcsv(file)
-    N = len(data['tagId'])
-    for i in range(0, len(data['tagId'])):
-        key = 'tag' + data['tagId'][i] + '_data'
-        score = int(data['timestamp'][i])
-
+    for measurement in measurements: 
+        key = 'tag' + measurement.tagId
+        score = int(measurement.timestamp)
         dataId = r.incr('data_counter')
-        anchorId = data['anchorId'][i]
-        rssi = data['rssi'][i]
-        element = anchorId + ":" + rssi + ":" + str(dataId)
-        r.zadd(key, {element:score})
+        element = measurement.anchorId + ":" + measurement.rssi + ":" + str(dataId)
+        r.zadd(key, {element:score}) # TODO(rqureshi): change to measurement.redis_write()
 
 def insert_anchor_data(file):
-    data = readcsv(file)
-    N = len(data['anchorId'])
+    anchors = Anchor.readcsv(file)
     hset = "anchors"
-    for i in range(0, len(data['anchorId'])):
-        key = data['anchorId'][i] 
-        value = data['X'][i] + ":" + data['Y'][i]
-        r.hset(hset, key, value)
+    for anchor in anchors:
+        key = anchor.anchorId
+        value = anchor.X + ":" + anchor.Y
+        r.hset(hset, key, value) # TODO(rqureshi): change to anchor.redis_write()
 
 def main(filetype, file):
     if filetype == 'tags':
