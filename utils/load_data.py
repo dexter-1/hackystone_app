@@ -1,9 +1,9 @@
 """This tool helps insert data into a redis db.
 """
 import redis
-import config_parser
 import argparse
 import os
+from hackystone_app.utils import config_parser
 from hackystone_app.models.measurement import Measurement
 from hackystone_app.models.anchor import Anchor
 
