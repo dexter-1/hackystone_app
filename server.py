@@ -1,9 +1,12 @@
 from flask import Flask
 from flask import jsonify
+from flask import request
 from flask_socketio import SocketIO, send, emit
 import time
 import random
 import threading
+import json
+import pprint
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
@@ -61,6 +64,15 @@ def root():
 def GetAnchors():
 	return jsonify(anchors)
 
+@app.route("/upload_tag_ping", methods=["POST"])
+def HandleTagUpload():
+	if request.method == "POST":
+		pp = pprint.PrettyPrinter(indent=4)
+		data = request.json
+		pp.pprint(data)
+
+	return json.dumps(data)
+
 @socketio.on('connect')
 def Connect():
 	print('Connected to client socket')
@@ -72,7 +84,7 @@ if __name__ == "__main__":
 	# data collection run on main thread
 	thread = threading.Thread(
 		target=socketio.run, args=(app,),
-		kwargs={'use_reloader': False}
+		kwargs={'use_reloader': False, 'host': '172.20.10.3', 'port': 5000}
 	)
 	thread.start()
 
