@@ -34,7 +34,7 @@ class Measurement:
         for d in data:
             parts = d[0].split(':')
             timestamp = d[1]
-            measurements.append(Measurement(parts[0], tagId, parts[1], timestamp))
+            measurements.append(Measurement(parts[0], tagId, float(parts[1]), timestamp))
         return measurements
 
     @staticmethod
