@@ -1,4 +1,5 @@
 import time
+import numpy as np
 from hackystone_app.models.measurement import Measurement
 from hackystone_app.models.anchor import Anchor
 import hackystone_app.algorithms.algorithms as algorithms
@@ -27,5 +28,5 @@ class TagPositionCalculator:
         for m in measurements:
             anchorIds.add(m.anchorId)
         if len(anchorIds) < 3:
-            return [None, None]
+            return np.array([None, None])
         return algorithms.compute_position(measurements, self.anchorMap)

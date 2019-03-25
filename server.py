@@ -13,13 +13,18 @@ from flask_socketio import SocketIO, send, emit
 from models import measurement
 from utils import config_parser
 
+from hackystone_app import tag_position_calculator
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-# socketio = SocketIO(app, message_queue="redis://")
+socketio = SocketIO(app)
 r = redis.Redis(host=config_parser.get_redis_config('host'),
 				port=config_parser.get_redis_config('port'),
 				db=0)
+TagPositionCalculator = tag_position_calculator.TagPositionCalculator(r)
+
+tagId = "0"
 
 @app.route("/")
 def root():
@@ -31,24 +36,29 @@ def GetAnchors():
 
 @app.route("/upload_tag_ping", methods=["POST"])
 def HandleTagUpload():
+	predictedPosition = TagPositionCalculator.compute_tag_position(r, tagId)
+	if (predictedPosition != [None, None]).all():
+		print("Predicted Position: [%f, %f]" %(predictedPosition[0], predictedPosition[1]))
 	if request.method == "POST":
 		data = request.json
-		pp = pprint.PrettyPrinter(indent=4)
-		pp.pprint(data)
+		#pp = pprint.PrettyPrinter(indent=4)
+		#pp.pprint(data)
 
 		anchorId = data['anchorId']
 		timestamp = time.time()
-
+		averageRSSI = 0
+		N = 0
 		for ping in data['data']:
+			averageRSSI += ping['rssi']
+			N += 1
+		if N != 0:
+			averageRSSI = averageRSSI/float(N)
 			m = measurement.Measurement(
-				anchorId, ping['tagId'], ping['rssi'], timestamp)
+				str(anchorId), str(ping['tagId']), str(averageRSSI), timestamp)
 			m.save(r)
 
 		return json.dumps(data)
 
-@socketio.on('connect')
-def Connect():
-	print('Connected to client socket')
 
 
 if __name__ == "__main__":
