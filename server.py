@@ -17,7 +17,9 @@ from utils import config_parser
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 # socketio = SocketIO(app, message_queue="redis://")
-
+r = redis.Redis(host=config_parser.get_redis_config('host'),
+				port=config_parser.get_redis_config('port'),
+				db=0)
 
 @app.route("/")
 def root():
@@ -40,11 +42,6 @@ def HandleTagUpload():
 		for ping in data['data']:
 			m = measurement.Measurement(
 				anchorId, ping['tagId'], ping['rssi'], timestamp)
-			r = redis.Redis(
-				host=config_parser.get_redis_config('host'),
-				port=config_parser.get_redis_config('port'),
-				db=0
-			)
 			m.save(r)
 
 		return json.dumps(data)
