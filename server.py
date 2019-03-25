@@ -1,60 +1,23 @@
-from flask import Flask
-from flask import jsonify
-from flask import request
-from flask_socketio import SocketIO, send, emit
 import time
 import random
 import threading
 import json
 import pprint
+import redis
+
+from flask import Flask
+from flask import jsonify
+from flask import request
+from flask_socketio import SocketIO, send, emit
+
+from models import measurement
+from utils import config_parser
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, message_queue="redis://")
+# socketio = SocketIO(app, message_queue="redis://")
 
-# Sample anchor data
-anchors = [
-	{
-		'anchorId': 0,
-		'x': 240,
-		'y': 100,
-	},
-	{
-		'anchorId': 1,
-		'x': 240,
-		'y': 200,
-	},
-	{
-		'anchorId': 2,
-		'x': 240,
-		'y': 300,
-	},
-	{
-		'anchorId': 3,
-		'x': 240,
-		'y': 400,
-	},
-	{
-		'anchorId': 4,
-		'x': 480,
-		'y': 100,
-	},
-	{
-		'anchorId': 5,
-		'x': 480,
-		'y': 200,
-	},
-	{
-		'anchorId': 6,
-		'x': 480,
-		'y': 300,
-	},
-	{
-		'anchorId': 7,
-		'x': 480,
-		'y': 400,
-	},
-]
 
 @app.route("/")
 def root():
@@ -67,11 +30,24 @@ def GetAnchors():
 @app.route("/upload_tag_ping", methods=["POST"])
 def HandleTagUpload():
 	if request.method == "POST":
-		pp = pprint.PrettyPrinter(indent=4)
 		data = request.json
+		pp = pprint.PrettyPrinter(indent=4)
 		pp.pprint(data)
 
-	return json.dumps(data)
+		anchorId = data['anchorId']
+		timestamp = time.time()
+
+		for ping in data['data']:
+			m = measurement.Measurement(
+				anchorId, ping['tagId'], ping['rssi'], timestamp)
+			r = redis.Redis(
+				host=config_parser.get_redis_config('host'),
+				port=config_parser.get_redis_config('port'),
+				db=0
+			)
+			m.save(r)
+
+		return json.dumps(data)
 
 @socketio.on('connect')
 def Connect():
@@ -88,6 +64,7 @@ if __name__ == "__main__":
 	)
 	thread.start()
 
+'''
 	socket = SocketIO(message_queue="redis://")
 
 	# This is where data collection from beacons and
@@ -102,3 +79,4 @@ if __name__ == "__main__":
 		tag = {'tagId': 0, 'x': x, 'y': y}
 		socket.emit('tags', tag)
 		time.sleep(0.100)
+'''
