@@ -1,4 +1,5 @@
-"""This tool helps insert data into a redis db.
+"""This tool dumps data from the redis db into a csv file.
+   Originally written for processing in MATLAB.
 """
 import redis
 import argparse
@@ -9,39 +10,38 @@ from hackystone_app.models.measurement import Measurement
 from hackystone_app.models.anchor import Anchor
 
 parser = argparse.ArgumentParser(description='Tool to init redis DB with data.')
-parser.add_argument('file', type=str,
-                    help='file containing data to input into redis DB.')
 parser.add_argument('--type', required=True, type=str,
                     help='either \'tags\' or \'anchors\' specifying what is in the file.')
+parser.add_argument('--id', type=str,
+                    help='if type is tag, id is required to know which tag to dump to csv file')
 
 r = redis.Redis(host=config_parser.get_redis_config('host'), port=config_parser.get_redis_config('port'), db=0)
 
-def insert_measurement_data(file):
+def dump_measurement_data(id):
     """Inserts tag measurement data from the given file into redis of the current configuration.
     """
-    measurements = Measurement.readcsv(file)
-    for measurement in measurements: 
-        measurement.save(r)
+    print(Measurement.toCsv(r, id))
 
-def insert_anchor_data(file):
-    anchors = Anchor.readcsv(file)
-    hset = "anchors"
-    for anchor in anchors:
-        key = anchor.anchorId
-        value = anchor.X + ":" + anchor.Y
-        r.hset(hset, key, value) # TODO(rqureshi): change to anchor.redis_write()
+def dump_anchors():
+    print(Anchor.toCsv(r))
 
-def main(filetype, file):
+def main(filetype, id):
     if filetype == 'tags':
-        insert_measurement_data(file)
+        if id == None:
+            return 1
+        dump_measurement_data(id)
         return 0
     elif filetype == 'anchors':
-        insert_anchor_data(file)
+        dump_anchors()
         return 0
     return 1
 
 def check_flags(args):
     if args.type != 'tags' and args.type != 'anchors':
+        parser.print_help()
+        return 1
+    if args.type == 'tags' and args.id == None:
+        print("Received --type=tags\n--id=<str> flag is required.")
         parser.print_help()
         return 1
     return 0
@@ -50,6 +50,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if check_flags(args):
         sys.exit(1)
-    if main(args.type, args.file):
+    if main(args.type, args.id):
         print("Something went wrong?")
         sys.exit(1)

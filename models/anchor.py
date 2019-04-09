@@ -29,3 +29,18 @@ class Anchor:
             X,Y = v.split(':')
             anchors[k] = Anchor(k, float(X), float(Y))
         return anchors
+
+    @staticmethod
+    def toCsv(r):
+        """Return string representation of csv of all anchors in redis db.
+        """
+        anchors = Anchor.hgetall(r).values()
+        headings = ["anchorId,", "X," "Y"]
+        buffer = []
+        buffer.extend(headings)
+        buffer.append('\n')
+        for a in anchors:
+            buffer.append(a.anchorId + ",")
+            buffer.append(str(a.X) + ",")
+            buffer.append(str(a.Y) + '\n')
+        return ''.join(buffer)

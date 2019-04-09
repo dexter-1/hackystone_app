@@ -6,6 +6,12 @@ from hackystone_app.utils import csv_parser
 class Measurement:
 
     def __init__(self, anchorId, tagId, rssi, timestamp):
+        """
+
+        Parameters:
+            anchorId (str) - string of an integer representing ID e.g. "0"
+            tagId (str) - string of an integer representing ID e.g. "1"
+        """
         self.anchorId = anchorId
         self.tagId = tagId
         self.rssi = rssi
@@ -26,7 +32,6 @@ class Measurement:
         """
         Parameters:
             tagId (int) - id of tag for which to get measurements
-
         """
         zset = "tag" + str(tagId) + "_data"
         data = r.zrangebyscore(zset, begin, end, withscores=True)
@@ -48,3 +53,21 @@ class Measurement:
         score = int(self.timestamp)
         element = self.anchorId + ":" + self.rssi + ":" + str(dataId)
         r.zadd(key, {element:score})
+
+    @staticmethod
+    def toCsv(r, tagId):
+        """Returns string representing csv file of 
+           all measurements related to a tagId
+        """
+        measurements = Measurement.zrangebyscore(r, tagId, 0, float('inf'))
+        headings = ["anchorId,", "tagId,", "rssi,", "timestamp"]
+        buffer = []
+        buffer.extend(headings)
+        buffer.append('\n')
+        for m in measurements:
+            buffer.append(m.anchorId + ",")
+            buffer.append(m.tagId + ",")
+            buffer.append(str(m.rssi) + ",")
+            buffer.append(str(m.timestamp) + "\n")
+        return ''.join(buffer)
+
