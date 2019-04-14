@@ -1,8 +1,12 @@
 import scipy.optimize
 import numpy as np
 
-n = 1.4267
-A = -59.0636
+# MYHAL_RM370 PARAMS
+n = 0.3387
+A =  -67.2842
+# NSCI CR PARAMS
+#n = 1.4267
+#A = -59.0636
 
 def compute_rssi(distance):
     return -10*n*np.log(distance) + A

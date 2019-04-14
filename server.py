@@ -14,6 +14,7 @@ from models import measurement
 from utils import config_parser
 
 from hackystone_app import tag_position_calculator
+from hackystone_app.models.anchor import Anchor
 
 
 app = Flask(__name__)
@@ -23,7 +24,7 @@ r = redis.Redis(host=config_parser.get_redis_config('host'),
 				port=config_parser.get_redis_config('port'),
 				db=0)
 TagPositionCalculator = tag_position_calculator.TagPositionCalculator(r)
-
+anchors = Anchor.hgetall(r).values()
 tagId = "0"
 
 @app.route("/")
@@ -67,7 +68,7 @@ if __name__ == "__main__":
 	# data collection run on main thread
 	thread = threading.Thread(
 		target=socketio.run, args=(app,),
-		kwargs={'use_reloader': False, 'host': '172.20.10.3', 'port': 5000}
+		kwargs={'use_reloader': False, 'port': 5000}
 	)
 	thread.start()
 
