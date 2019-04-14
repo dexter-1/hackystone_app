@@ -1,9 +1,12 @@
 import scipy.optimize
 import numpy as np
 
+# BA2135 PARAMS
+n = 0.9320
+A = -53.5399
 # MYHAL_RM370 PARAMS
-n = 0.3387
-A =  -67.2842
+# n = 0.3387
+# A =  -67.2842
 # NSCI CR PARAMS
 #n = 1.4267
 #A = -59.0636

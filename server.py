@@ -24,7 +24,7 @@ r = redis.Redis(host=config_parser.get_redis_config('host'),
 				port=config_parser.get_redis_config('port'),
 				db=0)
 TagPositionCalculator = tag_position_calculator.TagPositionCalculator(r)
-anchors = Anchor.hgetall(r).values()
+anchors = [{'X':a.X*100, 'Y': 100*a.Y, 'anchorId': a.anchorId} for a in Anchor.hgetall(r).values()]
 tagId = "0"
 
 @app.route("/")
@@ -35,17 +35,29 @@ def root():
 def GetAnchors():
 	return jsonify(anchors)
 
-@app.route("/upload_tag_ping", methods=["POST"])
-def HandleTagUpload():
+lastPos = [0, 0]
+
+@app.route("/get_tags")
+def GetTags():
 	predictedPosition = TagPositionCalculator.compute_tag_position(r, tagId)
 	if (predictedPosition != [None, None]).all():
+		lastPos[0] = predictedPosition[0]
+		lastPos[1] = predictedPosition[1]
 		print("Predicted Position: [%f, %f]" %(predictedPosition[0], predictedPosition[1]))
+	return jsonify({'tagId': tagId, 'X': lastPos[0]*100, 'Y': lastPos[1]*100})
+
+@app.route("/upload_tag_ping", methods=["POST"])
+def HandleTagUpload():
+	#predictedPosition = TagPositionCalculator.compute_tag_position(r, tagId)
+	#if (predictedPosition != [None, None]).all():
+	#	print("Predicted Position: [%f, %f]" %(predictedPosition[0], predictedPosition[1]))
 	if request.method == "POST":
 		data = request.json
 		#pp = pprint.PrettyPrinter(indent=4)
 		#pp.pprint(data)
 
 		anchorId = data['anchorId']
+		#print("Receiving data from anchor with id: " + str(anchorId))
 		timestamp = time.time()
 		averageRSSI = 0
 		N = 0
@@ -53,6 +65,7 @@ def HandleTagUpload():
 			averageRSSI += ping['rssi']
 			N += 1
 		if N != 0:
+			#print("N!=0")
 			averageRSSI = averageRSSI/float(N)
 			m = measurement.Measurement(
 				str(anchorId), str(ping['tagId']), str(averageRSSI), timestamp)
@@ -68,23 +81,6 @@ if __name__ == "__main__":
 	# data collection run on main thread
 	thread = threading.Thread(
 		target=socketio.run, args=(app,),
-		kwargs={'use_reloader': False, 'port': 5000}
+		kwargs={'use_reloader': False, 'host': '192.168.43.139', 'port': 5000}
 	)
 	thread.start()
-
-'''
-	socket = SocketIO(message_queue="redis://")
-
-	# This is where data collection from beacons and
-	# triangulation algorithms will go. For now,
-	# the code below just sends random tag coordinates
-	# through the socket to test the front end
-	x = 50
-	y = 50
-	while x < 720:
-		x += 1
-		y += random.randint(-1, 1)
-		tag = {'tagId': 0, 'x': x, 'y': y}
-		socket.emit('tags', tag)
-		time.sleep(0.100)
-'''

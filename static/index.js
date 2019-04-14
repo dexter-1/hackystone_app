@@ -1,13 +1,18 @@
-const radius = 2;
-const fontsize = 8;
-const localhost = 'http://localhost:5000';
+const radius = 10;
+const fontsize = 11;
+const localhost = 'http://192.168.43.139:5000';
+
+
+const dimX = 1275;
+const dimY = 863;
+let getTags = null;
 
 function setup() {
 	// initialize socket conenction with the server
 	const socket = io.connect(localhost);
 
 	// draw canvas
-	const canvas = createCanvas(720, 500);
+	const canvas = createCanvas(dimX, dimY);
 	textSize(fontsize);
 	canvas.parent('canvas-holder');
 	background(0);
@@ -24,11 +29,23 @@ function setup() {
 			for (let i = 0; i < anchors.length; i++) {
 				// put in anchor points onto the canvas
 				fill(255,0,0);
-				circle(anchors[i].x, anchors[i].y, radius);
 
+				if (anchors[i].X == 0) {
+					anchors[i].X += 5;
+				} else if(anchors[i].X == dimX) {
+					anchors[i].X -= 5;
+				}			
+				
+				if (anchors[i].Y == 0) {
+					anchors[i].Y += 5;
+				} else if(anchors[i].Y == dimY) {
+					anchors[i].Y -= 5;
+				}	
+
+				circle(anchors[i].X, anchors[i].Y, radius);
 				fill(255);
 				textAlign(CENTER);
-				text('Anchor ' + anchors[i].anchorId, anchors[i].x, anchors[i].y - 10);
+				text('Anchor ' + anchors[i].anchorId, anchors[i].X, anchors[i].Y - 10);
 			}
 		}
 	}
@@ -36,26 +53,42 @@ function setup() {
 	http.send(null);
 
 	// socket event handler to get tags
-	socket.on('tags',
-		function(tag) {
+	function tagOnReadyStateChange() {
+		if (getTags.readyState == 4 && getTags.status == 200) {
+			tag = JSON.parse(getTags.responseText);
 			background(0);
 
 			for (let i = 0; i < anchors.length; i++) {
 				// put in anchor points onto the canvas
 				fill(255,0,0);
-				circle(anchors[i].x, anchors[i].y, radius);
+				circle(anchors[i].X, anchors[i].Y, radius);
 
 				fill(255);
 				textAlign(CENTER);
-				text('Anchor ' + anchors[i].anchorId, anchors[i].x, anchors[i].y - 10);
+				text('Anchor ' + anchors[i].anchorId, anchors[i].X, anchors[i].Y - 10);
 			}
+			
+			tag.X = max(2, tag.X);
+			tag.X = min(dimX - 2, tag.X);
+			tag.Y = max(2, tag.Y);
+			tag.Y = min(dimY - 2, tag.Y);
 
 			fill(255);
-			circle(tag.x, tag.y, radius);
+			circle(tag.X, tag.Y, radius);
 
 			fill(255);
 			textAlign(CENTER);
-			text('Tag ' + tag.tagId, tag.x, tag.y - 10);
+			text('Tag ' + tag.tagId, tag.X, tag.Y - 10);
 		}
-	);
+	}
+
+	function main() {
+		getTags = new XMLHttpRequest();
+		getTags.onreadystatechange = tagOnReadyStateChange;
+		getTags.open('GET', '/get_tags', true);
+		getTags.send(null);
+		setTimeout(main, 1000);
+	};
+
+	main();
 }
