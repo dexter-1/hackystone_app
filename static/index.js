@@ -3,8 +3,8 @@ const fontsize = 11;
 const localhost = 'http://192.168.43.139:5000';
 
 
-const dimX = 1275;
-const dimY = 863;
+const dimX = 550;
+const dimY = 200;
 let getTags = null;
 
 function setup() {

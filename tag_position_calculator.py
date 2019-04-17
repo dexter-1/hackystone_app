@@ -11,7 +11,7 @@ class TagPositionCalculator:
     def __init__(self, r):
         self.anchorMap = Anchor.hgetall(r)
 
-    def compute_tag_position(self, r, tagId, deltaT = 5):
+    def compute_tag_position(self, r, tagId, deltaT = 7):
         """Goes into the redis database to extract all measurements of tagId
         taken between the current time t0 and t0-deltaT.
         If there are measurements from at least 3 anchors, makes a computation and returns the result, otherwise returns None.
@@ -33,4 +33,4 @@ class TagPositionCalculator:
                 mToUse.append(m)
         if len(anchorIds) < 3:
             return np.array([None, None])
-        return algorithms.compute_position(measurements, self.anchorMap)
+        return algorithms.compute_position(mToUse, self.anchorMap)
